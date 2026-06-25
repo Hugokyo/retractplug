@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS `crcw_retractplug_requests`;

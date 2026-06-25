@@ -1,0 +1,15 @@
+#retractplug-order-block {
+    border: 1px solid #ddd;
+    background-color: #fdfdfd;
+    border-radius: 4px;
+}
+#retractplug-order-block .spec-btn-retract {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+#retractplug-order-block .material-icons {
+    font-size: 18px;
+    vertical-align: middle;
+}
