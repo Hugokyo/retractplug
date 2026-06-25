@@ -203,34 +203,86 @@ class RetractPlug extends Module
      */
     public function hookDisplayOrderDetail($params)
     {
-        $order = $params['order'];
-        if (!Validate::isLoadedObject($order)) {
+        // 1. Récupération de l'ID de la commande (soit par le hook, soit par l'URL)
+        $id_order = 0;
+        $id_customer = 0;
+        $reference = '';
+        $current_state = 0;
+        $date_add = '';
+
+        if (isset($params['order']) && Validate::isLoadedObject($params['order'])) {
+            $id_order = (int)$params['order']->id;
+            $id_customer = (int)$params['order']->id_customer;
+            $reference = $params['order']->reference;
+            $current_state = (int)$params['order']->current_state;
+            $date_add = $params['order']->date_add;
+        } elseif (Tools::getValue('id_order')) {
+            $id_order = (int)Tools::getValue('id_order');
+            $order = new Order($id_order);
+            if (Validate::isLoadedObject($order)) {
+                $id_customer = (int)$order->id_customer;
+                $reference = $order->reference;
+                $current_state = (int)$order->current_state;
+                $date_add = $order->date_add;
+            }
+        }
+
+        if (!$id_order) {
             return '';
         }
 
-        require_once dirname(__FILE__) . '/classes/RetractRequest.php';
-        
-        $request_data = Db::getInstance()->getRow('
-            SELECT id_retractplug_request, status 
-            FROM `' . _DB_PREFIX_ . 'retractplug_requests` 
-            WHERE `id_order` = ' . (int)$order->id
-        );
+        // 2. Vérification du Mode Debug / Recette
+        $debug_customer_id = (int)Configuration::get('RETRACTPLUG_DEBUG_CUSTOMER_ID');
+        $is_debug_user = ($debug_customer_id > 0 && $id_customer === $debug_customer_id);
 
-        if (!$request_data) {
-            return ''; 
+        // 3. Vérification en base de données si une demande existe déjà
+        $sql = 'SELECT id_retractplug_request FROM `'._DB_PREFIX_.'retractplug_requests` WHERE `id_order` = '.$id_order;
+        $request_data = Db::getInstance()->getRow($sql);
+        $id_request = !empty($request_data['id_retractplug_request']) ? (int)$request_data['id_retractplug_request'] : 0;
+
+        // 4. Calcul du délai des 14 jours (Loi Hamon)
+        $days_left = 0;
+        if (!empty($date_add)) {
+            $delivery_date = new DateTime($date_add);
+            $current_date = new DateTime();
+            $interval = $current_date->diff($delivery_date);
+            $days_passed = (int)$interval->format('%a');
+            $days_left = 14 - $days_passed;
+            if ($days_left < 0) {
+                $days_left = 0;
+            }
         }
 
-        $id_request = (int)$request_data['id_retractplug_request'];
-        
-        $this->context->smarty->assign([
-            'id_request' => $id_request,
-            'download_pdf_link' => $this->context->link->getModuleLink('retractplug', 'pdf', ['id_request' => $id_request]),
-            'request_status' => $request_data['status']
-        ]);
+        // 5. Application des règles de production (Bypass si mode Debug)
+        if (!$is_debug_user) {
+            // Bloquer si le statut est Annulé ou en Erreur
+            $forbidden_states = array((int)Configuration::get('PS_OS_CANCELED'), (int)Configuration::get('PS_OS_ERROR'));
+            if (in_array($current_state, $forbidden_states)) {
+                return '';
+            }
 
-        return $this->context->smarty->fetch(
-            _PS_MODULE_DIR_ . 'retractplug/views/templates/hook/order_detail_return.tpl'
-        );
+            // Bloquer si le délai des 14 jours est dépassé
+            if ($days_left <= 0) {
+                return '';
+            }
+        } else {
+            // Mode Debug actif : Si le délai est à 0 ou négatif, on force visuellement à 14 pour le test
+            if ($days_left <= 0) {
+                $days_left = 14;
+            }
+        }
+
+        // 6. Envoi des données à Smarty (Alignement parfait avec les variables du Template)
+        $this->context->smarty->assign(array(
+            'id_order' => $id_order,
+            'reference' => $reference,
+            'days_left' => $days_left,
+            'retract_already_done' => $id_request > 0, // Aligné sur votre template
+            'retract_url' => $this->context->link->getModuleLink('retractplug', 'form', array('id_order' => $id_order)), // Aligné sur votre template
+            'download_url' => $id_request > 0 ? $this->context->link->getModuleLink('retractplug', 'pdf', array('id_request' => $id_request)) : ''
+        ));
+
+        return $this->display(__FILE__, 'views/templates/hook/order_detail_return.tpl');
     }
     /**
      * Hook d'affichage du bouton de rétractation sur le détail de la commande
@@ -250,6 +302,7 @@ class RetractPlug extends Module
                 Configuration::updateValue('RETRACTPLUG_DOLIBARR_API_URL', Tools::getValue('RETRACTPLUG_DOLIBARR_API_URL'));
                 Configuration::updateValue('RETRACTPLUG_DOLIBARR_API_KEY', Tools::getValue('RETRACTPLUG_DOLIBARR_API_KEY'));
                 Configuration::updateValue('RETRACTPLUG_GENERATE_DOLIBARR_INVOICE', (int)Tools::getValue('RETRACTPLUG_GENERATE_DOLIBARR_INVOICE'));
+                Configuration::updateValue('RETRACTPLUG_DEBUG_CUSTOMER_ID', (int)Tools::getValue('RETRACTPLUG_DEBUG_CUSTOMER_ID'));
                 Configuration::updateValue('RETRACTPLUG_ALERT_EMAIL', $email);
 
                 $output .= $this->displayConfirmation($this->l('Configurations enregistrées avec succès.'));
@@ -318,6 +371,7 @@ class RetractPlug extends Module
         $helper->fields_value['RETRACTPLUG_DOLIBARR_API_URL'] = Configuration::get('RETRACTPLUG_DOLIBARR_API_URL');
         $helper->fields_value['RETRACTPLUG_DOLIBARR_API_KEY'] = Configuration::get('RETRACTPLUG_DOLIBARR_API_KEY');
         $helper->fields_value['RETRACTPLUG_GENERATE_DOLIBARR_INVOICE'] = Configuration::get('RETRACTPLUG_GENERATE_DOLIBARR_INVOICE') !== false ? Configuration::get('RETRACTPLUG_GENERATE_DOLIBARR_INVOICE') : 1;
+        $helper->fields_value['RETRACTPLUG_DEBUG_CUSTOMER_ID'] = Configuration::get('RETRACTPLUG_DEBUG_CUSTOMER_ID');
         $helper->fields_value['RETRACTPLUG_ALERT_EMAIL'] = Configuration::get('RETRACTPLUG_ALERT_EMAIL'); // Nouveau
         $helper->fields_value['RETRACTPLUG_CRON_URL'] = $cron_url;
 

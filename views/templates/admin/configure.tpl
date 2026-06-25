@@ -1,4 +1,4 @@
-{**
+{*
  * 2026 Hugo BOHARD
  *}
 
@@ -12,7 +12,7 @@
 <div class="tab-content" style="background: transparent; border: none; padding: 0;">
     
     <div class="tab-pane active" id="tab-requests">
-        </div>
+    </div>
     
     <div class="tab-pane" id="tab-config">
         {$form_html}
@@ -32,8 +32,8 @@
             <hr />
             
             <form action="{$smarty.server.REQUEST_URI|escape:'htmlall':'UTF-8'}" method="post">
-                <div class="row">
-                    <div class="col-lg-4">
+                <div class="row" style="margin-bottom: 20px;">
+                    <div class="col-lg-6">
                         <div class="well text-center">
                             <h4>Ping Dolibarr</h4>
                             <p class="small text-muted">Vérifie si le serveur et la clé API répondent.</p>
@@ -43,7 +43,19 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
+                        <div class="well text-center">
+                            <h4>Notification de secours</h4>
+                            <p class="small text-muted">Simule l'envoi d'un e-mail d'alerte à l'adresse de secours.</p>
+                            <button type="submit" name="submitTestEmail" class="btn btn-info btn-block">
+                                <i class="icon-envelope"></i> Tester l'envoi de l'e-mail d'alerte
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-6">
                         <div class="well text-center">
                             <h4>Avoir fictif</h4>
                             <p class="small text-muted">Envoie un avoir de simulation sur Dolibarr.</p>
@@ -53,7 +65,7 @@
                         </div>
                     </div>
                     
-                    <div class="col-lg-4">
+                    <div class="col-lg-6">
                         <div class="well text-center">
                             <h4>Vider les logs</h4>
                             <p class="small text-muted">Réinitialise le fichier de log local du module.</p>

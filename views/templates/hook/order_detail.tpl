@@ -13,11 +13,20 @@
         {else}
             <p class="text-muted">
                 {l s='Conformément à la législation, vous disposez de 14 jours après réception de votre colis pour changer d\'avis.' mod='retractplug'} 
-                <span class="font-weight-bold text-warning">({l s='Il vous reste %d jours' sprintf=[$days_left] mod='retractplug'})</span>.
+                {if isset($days_left)}
+                    <span class="font-weight-bold text-warning">({l s='Il vous reste %d jours' sprintf=[$days_left] mod='retractplug'})</span>.
+                {/if}
             </p>
-            <a href="{$retract_url|escape:'html':'UTF-8'}" class="btn btn-primary spec-btn-retract">
-                <i class="material-icons">assignment_return</i> {l s='Demander une rétractation' mod='retractplug'}
-            </a>
+            
+            {if isset($retract_url) && $retract_url}
+                <a href="{$retract_url}" class="btn btn-primary spec-btn-retract">
+                    <i class="material-icons">assignment_return</i> {l s='Demander une rétractation' mod='retractplug'}
+                </a>
+            {else}
+                <div class="alert alert-danger">
+                    {l s='Erreur : L\'URL de rétractation n\'a pas pu être générée.' mod='retractplug'}
+                </div>
+            {/if}
         {/if}
     </div>
 </div>

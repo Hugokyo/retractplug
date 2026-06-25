@@ -1,22 +1,43 @@
-{*
+{**
  * 2026 Hugo BOHARD
  *}
-<div class="box info-block" style="margin-top: 20px; background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 20px; border-radius: 4px;">
-    <div class="row" style="align-items: center;">
-        <div class="col-md-8" style="color: #166534; line-height: 1.5;">
-            <h3 style="color: #14532d; font-weight: bold; margin-top: 0; font-size: 1.1rem; display: flex; align-items: center;">
-                <i class="material-icons" style="margin-right: 8px; color: #166534; vertical-align: middle;">assignment_return</i>
-                {l s='Une demande de rétractation est en cours' mod='retractplug'}
-            </h3>
-            <p style="margin-bottom: 0; font-size: 0.9rem;">
-                {l s='Vous avez initié une procédure de retour pour cette commande. Vous pouvez télécharger à nouveau votre document logistique pour l\'insérer dans votre colis.' mod='retractplug'}
+
+<div id="retractplug-order-block" class="box values-block card memory-card mt-3">
+    <div class="card-block">
+        <h3 class="card-title"><i class="material-icons">gavel</i> {l s='Droit de rétractation' mod='retractplug'}</h3>
+        
+        {if $retract_already_done}
+            <!-- Bloc d'alerte propre et moderne -->
+            <div class="alert alert-success d-flex align-items-start" role="alert">
+                <i class="material-icons text-success mr-2">check_circle</i>
+                <div>
+                    <h5 class="alert-heading font-weight-bold text-success mb-1">
+                        {l s='Demande de rétractation enregistrée' mod='retractplug'}
+                    </h5>
+                    <p class="text-muted mb-0">
+                        {l s='Votre demande a bien été prise en compte. Vous pouvez télécharger votre bordereau de retour à tout moment ci-dessous.' mod='retractplug'}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Bouton de téléchargement centré et aéré -->
+            {if isset($download_url) && $download_url}
+                <div class="text-center mt-3">
+                    <a href="{$download_url|escape:'html':'UTF-8'}" class="btn btn-secondary spec-btn-download" target="_blank">
+                        <i class="material-icons">cloud_download</i> {l s='Télécharger mon bordereau de retour (PDF)' mod='retractplug'}
+                    </a>
+                </div>
+            {/if}
+        {else}
+            <p class="text-muted">
+                {l s='Conformément à la législation, vous disposez de 14 jours après réception de votre colis pour changer d\'avis.' mod='retractplug'} 
+                {if isset($days_left)}
+                    <span class="font-weight-bold text-warning">({l s='Il vous reste %d jours' sprintf=[$days_left] mod='retractplug'})</span>.
+                {/if}
             </p>
-        </div>
-        <div class="col-md-4 text-md-right text-xs-center" style="margin-top: 10px;">
-            <a href="{$download_pdf_link}" class="btn btn-primary spec-pdf-btn" target="_blank" style="background-color: #166534; border-color: #14532d; display: inline-flex; align-items: center; padding: 10px 15px; color: #fff;">
-                <i class="material-icons" style="margin-right: 5px; font-size: 18px;">get_app</i>
-                {l s='Télécharger mon bordereau (PDF)' mod='retractplug'}
+            <a href="{$retract_url|escape:'html':'UTF-8'}" class="btn btn-primary spec-btn-retract">
+                <i class="material-icons">assignment_return</i> {l s='Demander une rétractation' mod='retractplug'}
             </a>
-        </div>
+        {/if}
     </div>
 </div>

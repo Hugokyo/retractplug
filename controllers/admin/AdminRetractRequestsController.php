@@ -280,7 +280,7 @@ class AdminRetractRequestsController extends AdminController
    /**
     * Génération du formulaire de configuration du module
     */
-   protected function renderConfigurationForm()
+    protected function renderConfigurationForm()
     {
         $cron_token = Configuration::get('RETRACTPLUG_CRON_TOKEN');
         if (!$cron_token) {
@@ -304,19 +304,13 @@ class AdminRetractRequestsController extends AdminController
         $helper->fields_value['RETRACTPLUG_DOLIBARR_API_KEY'] = Configuration::get('RETRACTPLUG_DOLIBARR_API_KEY');
         $helper->fields_value['RETRACTPLUG_DEBUG_CUSTOMER_ID'] = Configuration::get('RETRACTPLUG_DEBUG_CUSTOMER_ID');
         $helper->fields_value['RETRACTPLUG_GENERATE_DOLIBARR_INVOICE'] = Configuration::get('RETRACTPLUG_GENERATE_DOLIBARR_INVOICE') !== false ? Configuration::get('RETRACTPLUG_GENERATE_DOLIBARR_INVOICE') : 1;
-        
         $helper->fields_value['RETRACTPLUG_ALERT_EMAIL'] = Configuration::get('RETRACTPLUG_ALERT_EMAIL');
         $helper->fields_value['RETRACTPLUG_CRON_URL'] = $cron_url;
-
-        $email_desc = $this->l('Adresse qui recevra une notification si l\'API Dolibarr échoue.') . '<br/><br/>' .
-            '<button type="submit" name="submitTestEmail" class="btn btn-info">' .
-            '<i class="icon-envelope"></i> ' . $this->l('Tester l\'envoi') .
-            '</button>';
 
         $fields_form = [
             'form' => [
                 'legend' => [
-                    'title' => $this->l('Paramètres d\'accès & Outils de test'),
+                    'title' => $this->l('Paramètres d\'accès & Sécurité'),
                     'icon' => 'icon-cogs',
                 ],
                 'input' => [
@@ -360,7 +354,7 @@ class AdminRetractRequestsController extends AdminController
                         'name' => 'RETRACTPLUG_ALERT_EMAIL',
                         'required' => false,
                         'col' => 4,
-                        'desc' => $email_desc,
+                        'desc' => $this->l('Adresse qui recevra une notification si l\'API Dolibarr échoue.'),
                     ],
                     [
                         'type' => 'text',
@@ -371,10 +365,15 @@ class AdminRetractRequestsController extends AdminController
                         'desc' => $this->l('Copiez cette URL pour configurer votre gestionnaire de tâches (Crontab) afin d\'exécuter la file d\'attente.'),
                     ],
                 ],
-                'submit' => [
-                    'title' => $this->l('Enregistrer'),
-                    'class' => 'btn btn-default pull-right',
-                ],
+                'buttons' => [
+                    'save' => [
+                        'name' => 'submitRetractPlugConfig',
+                        'type' => 'submit',
+                        'title' => $this->l('Enregistrer les paramètres'),
+                        'class' => 'btn btn-default pull-right',
+                        'icon' => 'process-icon-save'
+                    ]
+                ]
             ],
         ];
 
